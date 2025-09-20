@@ -1,0 +1,23 @@
+{
+	"name": "mute-salad-0c10",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest",
+		"cf-typegen": "wrangler types"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"@cloudflare/workers-types": "^4.20250911.0",
+		"typescript": "^5.5.2",
+		"vitest": "~3.2.0",
+		"wrangler": "^4.35.0"
+	},
+	"dependencies": {
+		"bcryptjs": "^3.0.2",
+		"jose": "^6.1.0"
+	}
+}

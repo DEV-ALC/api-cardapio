@@ -1,0 +1,18 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "mute-salad-0c10",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-09-11",
+	"observability": {
+		"enabled": true
+	},
+
+	// Adicionando binding do D1
+	"d1_databases": [
+		{
+			"binding": "D1_BANCO",
+			"database_name": "cardapio",
+			"database_id": "1c20cb20-7fec-49f0-89a8-e7e4a2b8cf87"
+		}
+	]
+}
