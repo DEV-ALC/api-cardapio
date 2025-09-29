@@ -1,11 +1,8 @@
 import { D1Database } from '@cloudflare/workers-types';
-import { gerarToken, validarToken } from './auth';
+import { gerarToken, validarToken, loginEmpresa } from './function/auth';
 import { LoginBody, CadastroEmpresaBody, CadastroUsuarioBody, CadastroProdutoBody, TokenPayload } from './types';
-import { gerarHash, validarSenha } from './utils';
+import { gerarHash, validarSenha, Env } from './utils';
 
-export interface Env {
-  D1_BANCO: D1Database;
-}
 
 export default {
   async fetch(request: Request, env: Env) {
@@ -36,24 +33,13 @@ export default {
 
     // ====================== LOGIN ======================
     if (url.pathname === '/login' && request.method === 'POST') {
-      const body: LoginBody = await request.json();
-      const res = await env.D1_BANCO
-        .prepare("SELECT empresa, usuario, senha FROM usuario WHERE usuario = ?")
-        .bind(body.usuario)
-        .first<{ empresa: string; usuario: string; senha: string }>();
-      if (!res) return respostaCors("Usuário ou senha incorretos", 401);
-
-      const senhaValida = await validarSenha(body.senha, res.senha);
-      if (!senhaValida) return respostaCors("Usuário ou senha incorretos", 401);
-
-      const token = await gerarToken({ usuario: res.usuario, empresa: res.empresa, tipo: 'admin' as TokenPayload['tipo'] });
-      return respostaCors({ token, usuario: res.usuario, empresa: res.empresa });
+      return loginEmpresa(request, env, validarSenha, respostaCors);
     }
 
     if (url.pathname === '/softhouse' && request.method === 'POST') {
       const body: LoginBody = await request.json();
       const res = await env.D1_BANCO
-        .prepare("SELECT softhouse, usuario, senha FROM usuariosofthouse WHERE usuario = ?")
+        .prepare("SELECT softhouse_id, usuario_nome, senha FROM usuariosofthouse WHERE usuario_nome = ?")
         .bind(body.usuario)
         .first<{ softhouse: string; usuario: string; senha: string }>();
       if (!res) return respostaCors("Usuário ou senha incorretos", 401);
@@ -82,7 +68,7 @@ export default {
 
       // 1. Buscar a empresa pelo slug
       const empresaRes = await env.D1_BANCO
-        .prepare("SELECT empresa FROM empresa WHERE slug = ?")
+        .prepare("SELECT empresa_id FROM empresa WHERE slug = ?")
         .bind(slug)
         .first<{ empresa: number }>();
 
@@ -103,9 +89,9 @@ export default {
 
       // 2. Buscar os produtos dessa empresa
       const res = await env.D1_BANCO
-        .prepare(`SELECT cod, empresaDoProduto, nomeProduto, valor, codBA, grupo, grupoID, imagemId 
+        .prepare(`SELECT produto_id, empresa_id, nome_produto, valor, cod_ba, grupo_id, , imagem_id 
               FROM produtos 
-              WHERE empresaDoProduto = ?`)
+              WHERE empresa_id = ?`)
         .bind(empresaId)
         .all<CadastroProdutoBody>();
 
@@ -151,7 +137,7 @@ export default {
 
       await env.D1_BANCO
         .prepare(`
-      INSERT INTO empresa (empresa, softhouse, nomeEmpresa, slug, token, tokenExpira, imagemId)
+      INSERT INTO empresa (empresa_id, softhouse_id, nome_empresa, slug, token, token_expira, imagem_id)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `)
         .bind(
@@ -182,9 +168,9 @@ export default {
       // busca no banco
       const result = await env.D1_BANCO
         .prepare(`
-      SELECT empresa, softhouse, nomeEmpresa, slug, token, tokenExpira, imagemId
+      SELECT empresa_id, softhouse_id, nome_empresa, slug, token, token_expira, imagem_id
       FROM empresa
-      WHERE empresa = ?
+      WHERE empresa_id = ?
     `)
         .bind(empresaId)
         .first(); // pega um único registro
@@ -206,7 +192,7 @@ export default {
       if (!empresaId) return respostaCors("Parâmetro 'empresa' é obrigatório", 400);
 
       const existe = await env.D1_BANCO
-        .prepare("SELECT empresa FROM empresa WHERE empresa = ?")
+        .prepare("SELECT empresa_id FROM empresa WHERE empresa_id = ?")
         .bind(empresaId)
         .first();
 
@@ -217,7 +203,7 @@ export default {
       const valores: any[] = [];
 
       if (body.nomeEmpresa !== undefined) {
-        updates.push("nomeEmpresa = ?");
+        updates.push("nome_empresa = ?");
         valores.push(body.nomeEmpresa);
       }
       if (body.token !== undefined) {
@@ -225,11 +211,11 @@ export default {
         valores.push(body.token);
       }
       if (body.tokenExpira !== undefined) {
-        updates.push("tokenExpira = ?");
+        updates.push("token_expira = ?");
         valores.push(body.tokenExpira);
       }
       if (body.imagemId !== undefined) {
-        updates.push("imagemId = ?");
+        updates.push("imagem_id = ?");
         valores.push(body.imagemId);
       }
 
@@ -253,7 +239,7 @@ export default {
       if (payload.tipo !== 'softhouse') return respostaCors("Permissão negada", 403);
 
       const res = await env.D1_BANCO
-        .prepare("SELECT empresa, nomeEmpresa, slug, imagemId FROM empresa")
+        .prepare("SELECT empresa_id, nome_empresa, slug, imagem_id FROM empresa")
         .all<{ empresa: string; nomeEmpresa: string; slug: string; imagemId: string }>();
 
       return respostaCors(res.results || []);
@@ -267,7 +253,7 @@ export default {
       const senhaHash = await gerarHash(body.senha);
 
       await env.D1_BANCO
-        .prepare("INSERT INTO usuario (empresa, usuario, senha) VALUES (?, ?, ?)")
+        .prepare("INSERT INTO usuario (empresa_id, usuario_nome, senha) VALUES (?, ?, ?)")
         .bind(body.empresa, body.usuario, senhaHash)
         .run();
 
@@ -284,7 +270,7 @@ export default {
       if (!empresaId) return respostaCors("Parâmetro 'empresa' obrigatório", 400);
 
       const res = await env.D1_BANCO
-        .prepare("SELECT empresa, usuario FROM usuario WHERE empresa = ?")
+        .prepare("SELECT empresa_id, usuario_id FROM usuario WHERE empresa_id = ?")
         .bind(empresaId)
         .all<{ empresa: string; usuario: string }>();
 
@@ -302,7 +288,7 @@ export default {
       const senhaHash = await gerarHash(body.senha); // mesma função que você usa para cadastrar
 
       await env.D1_BANCO
-        .prepare("UPDATE usuario SET senha = ? WHERE empresa = ? AND usuario = ?")
+        .prepare("UPDATE usuario SET senha = ? WHERE empresa_id = ? AND usuario_id = ?")
         .bind(senhaHash, body.empresa, body.usuario)
         .run();
 
@@ -319,7 +305,7 @@ export default {
       const empresaSlug = payload.empresa;
 
       const res = await env.D1_BANCO
-        .prepare("SELECT cod, empresaDoProduto, nomeProduto, valor, codBA, grupo, grupoID, imagemId FROM produtos WHERE empresaDoProduto = ?")
+        .prepare("SELECT produto_id, empresa_id, nome_produto, valor, cod_ba,  grupo_id, imagem_id FROM produtos WHERE empresa_id = ?")
         .bind(empresaSlug)
         .all<CadastroProdutoBody>();
 
@@ -344,7 +330,7 @@ export default {
       if (!cod) return respostaCors("Código do produto obrigatório", 400);
 
       const produto = await env.D1_BANCO
-        .prepare("SELECT cod, empresaDoProduto, nomeProduto, valor, codBA, grupo, grupoID, imagemId FROM produtos WHERE cod = ? AND empresaDoProduto=?")
+        .prepare("SELECT produto_id, empresa_id, nome_produto, valor, cod_ba, grupo_id, imagem_id FROM produtos WHERE produto_id = ? AND empresa_id=?")
         .bind(cod, empresaSlug)
         .first<CadastroProdutoBody>();
 
@@ -360,14 +346,13 @@ export default {
       const body: CadastroProdutoBody = await request.json();
 
       await env.D1_BANCO
-        .prepare("INSERT INTO produtos (cod, empresaDoProduto, nomeProduto, valor, codBA, grupo, grupoID, imagemId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        .prepare("INSERT INTO produtos (produto_id, empresa_id, nome_produto, valor, cod_ba, grupo_id, imagem_id) VALUES (?, ?, ?, ?, ?, ?, ?)")
         .bind(
           body.cod,
           empresaSlug,
           body.nomeProduto,
           body.valor,
           body.codBA,
-          body.grupo,
           body.grupoID,
           body.imagemId
         )
@@ -386,12 +371,11 @@ export default {
       const updates: string[] = [];
       const valores: any[] = [];
 
-      if (body.nomeProduto !== undefined) { updates.push("nomeProduto = ?"); valores.push(body.nomeProduto); }
+      if (body.nomeProduto !== undefined) { updates.push("nome_produto = ?"); valores.push(body.nomeProduto); }
       if (body.valor !== undefined) { updates.push("valor = ?"); valores.push(body.valor); }
-      if (body.codBA !== undefined) { updates.push("codBA = ?"); valores.push(body.codBA); }
-      if (body.grupo !== undefined) { updates.push("grupo = ?"); valores.push(body.grupo); }
-      if (body.grupoID !== undefined) { updates.push("grupoID = ?"); valores.push(body.grupoID); }
-      if (body.imagemId !== undefined) { updates.push("imagemId = ?"); valores.push(body.imagemId); }
+      if (body.codBA !== undefined) { updates.push("cod_ba = ?"); valores.push(body.codBA); }
+      if (body.grupoID !== undefined) { updates.push("grupo_id = ?"); valores.push(body.grupoID); }
+      if (body.imagemId !== undefined) { updates.push("imagem_id = ?"); valores.push(body.imagemId); }
 
       if (updates.length === 0) return respostaCors("Nenhum campo para atualizar", 400);
 

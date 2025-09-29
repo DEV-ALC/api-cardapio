@@ -30,12 +30,12 @@ CREATE TABLE usuario (
 
 -- Tabela usuariosofthouse
 CREATE TABLE usuariosofthouse (
+    usuario_id INTEGER PRIMARY KEY AUTOINCREMENT,
     softhouse_id INTEGER NOT NULL,
-    usuario_id INTEGER NOT NULL,
+    usuario_nome TEXT NOT NULL,
     senha TEXT NOT NULL,
     PRIMARY KEY (softhouse_id, usuario_id),
     FOREIGN KEY (softhouse_id) REFERENCES softhouse(softhouse_id),
-    FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id)
 );
 
 -- Tabela produtos

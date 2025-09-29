@@ -13,6 +13,20 @@ export interface CadastroEmpresaBody {
   tokenExpira: string;
 }
 
+export interface VendaBody {
+  empresa: string;       // ID ou slug da empresa
+  venda: string;   // numero da venda
+  valor: number;          // valor da venda
+  data: Date;
+}
+
+export interface VendaBody {
+  empresa: string;       // ID ou slug da empresa
+  venda: string;   // numero da venda
+  valor: number;          // valor da venda
+  data: Date;
+}
+
 export interface CadastroUsuarioBody {
   empresa: string;
   usuario: string;
@@ -24,7 +38,6 @@ export interface CadastroProdutoBody {
   nomeProduto: string;
   valor: number;
   codBA: string;
-  grupo: string;
   grupoID: string;
   imagemId?: string | null;
 };
