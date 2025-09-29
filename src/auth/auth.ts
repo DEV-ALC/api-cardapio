@@ -72,4 +72,26 @@ export async function loginEmpresa(request: Request, env: Env, validarSenha: (se
 }
 
 
+export async function loginSoftHouse(request: Request, env: Env, validarSenha: (senha: string, hash: string) => Promise<boolean>, respostaCors: (data: any, status?: number) => Response): Promise<Response> {
+  try {
+    const body: LoginBody = await request.json();
+    const res = await env.D1_BANCO
+      .prepare("SELECT softhouse_id, usuario_nome, senha FROM usuariosofthouse WHERE usuario_nome = ?")
+      .bind(body.usuario)
+      .first<{ softhouse_id: string; usuario_nome: string; senha: string }>();
+    if (!res) return respostaCors("Usuário ou senha incorretos", 401);
+
+    const senhaValida = await validarSenha(body.senha, res.senha);
+    if (!senhaValida) return respostaCors("Usuário ou senha incorretos", 401);
+
+    const token = await gerarToken({ usuario: res.usuario_nome, empresa: res.softhouse_id, tipo: 'softhouse' as TokenPayload['tipo'] });
+    return respostaCors({ token, usuario: res.usuario_nome, empresa: res.softhouse_id });
+  } catch (error) {
+    // Lidar com erros de parsing do JSON ou outros erros inesperados
+    console.error("Erro durante o login:", error);
+    return respostaCors("Erro interno do servidor", 500);
+  }
+}
+
+
 

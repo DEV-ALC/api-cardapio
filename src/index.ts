@@ -1,5 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types';
-import { gerarToken, validarToken, loginEmpresa } from './function/auth';
+import { gerarToken, validarToken, loginEmpresa, loginSoftHouse } from './auth/auth';
 import { LoginBody, CadastroEmpresaBody, CadastroUsuarioBody, CadastroProdutoBody, TokenPayload } from './types';
 import { gerarHash, validarSenha, Env } from './utils';
 
@@ -37,18 +37,7 @@ export default {
     }
 
     if (url.pathname === '/softhouse' && request.method === 'POST') {
-      const body: LoginBody = await request.json();
-      const res = await env.D1_BANCO
-        .prepare("SELECT softhouse_id, usuario_nome, senha FROM usuariosofthouse WHERE usuario_nome = ?")
-        .bind(body.usuario)
-        .first<{ softhouse: string; usuario: string; senha: string }>();
-      if (!res) return respostaCors("Usuário ou senha incorretos", 401);
-
-      const senhaValida = await validarSenha(body.senha, res.senha);
-      if (!senhaValida) return respostaCors("Usuário ou senha incorretos", 401);
-
-      const token = await gerarToken({ usuario: res.usuario, empresa: res.softhouse, tipo: 'softhouse' as TokenPayload['tipo'] });
-      return respostaCors({ token, usuario: res.usuario, empresa: res.softhouse });
+      return loginSoftHouse(request, env, validarSenha, respostaCors);
     }
 
     if (url.pathname === '/produtos-grupos' && request.method === 'GET') {

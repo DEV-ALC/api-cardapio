@@ -25,6 +25,7 @@ CREATE TABLE usuario (
     empresa_id INTEGER NOT NULL,
     usuario_nome TEXT NOT NULL,
     senha TEXT NOT NULL,
+    deleted INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (empresa_id) REFERENCES empresa(empresa_id)
 );
 
@@ -34,8 +35,8 @@ CREATE TABLE usuariosofthouse (
     softhouse_id INTEGER NOT NULL,
     usuario_nome TEXT NOT NULL,
     senha TEXT NOT NULL,
-    PRIMARY KEY (softhouse_id, usuario_id),
-    FOREIGN KEY (softhouse_id) REFERENCES softhouse(softhouse_id),
+    deleted INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (softhouse_id) REFERENCES softhouse(softhouse_id)
 );
 
 -- Tabela produtos
@@ -47,6 +48,7 @@ CREATE TABLE produtos (
     cod_ba TEXT NOT NULL,
     grupo_id TEXT NOT NULL,
     imagem_id TEXT,
+    deleted INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (empresa_id) REFERENCES empresa(empresa_id)
 );
 
@@ -56,8 +58,7 @@ CREATE TABLE venda (
     empresa_id INTEGER NOT NULL,
     valor REAL NOT NULL,
     data TEXT DEFAULT CURRENT_TIMESTAMP,
-    ativo INTEGER NOT NULL DEFAULT 1,
-    status TEXT NOT NULL DEFAULT 'Pendente',
+    deleted INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (empresa_id) REFERENCES empresa(empresa_id)
 );
 
@@ -69,7 +70,7 @@ CREATE TABLE venda_item (
     valor REAL NOT NULL,
     desconto REAL NOT NULL,
     quantidade REAL NOT NULL DEFAULT 1,
-    status TEXT NOT NULL DEFAULT 'Pendente',
+    deleted INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (venda_id) REFERENCES venda(venda_id),
     FOREIGN KEY (produto_id) REFERENCES produtos(produto_id)
 );
@@ -79,7 +80,7 @@ CREATE TABLE grupo_prod (
     grupo_id TEXT NOT NULL,
     nome_grupo TEXT NOT NULL,
     empresa_id INTEGER NOT NULL,
-    ativo INTEGER NOT NULL DEFAULT 1,
+    deleted INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (grupo_id, empresa_id),
     FOREIGN KEY (empresa_id) REFERENCES empresa(empresa_id)
 );
@@ -101,23 +102,23 @@ INSERT INTO usuario (empresa_id, usuario_nome, senha)
 VALUES (1, 'usuario2', '$2b$10$rM2Q1NIXqwTlfJVq7rcYwOClpNuXkJbZ4mpXI/UhYBq0JxRBfRji6');
 
 -- Inserir usuariosofthouse (relacionamento entre softhouse e usuários)
-INSERT INTO usuariosofthouse (softhouse_id, usuario_id, senha)
-VALUES (1, 1, '$2b$10$rM2Q1NIXqwTlfJVq7rcYwOClpNuXkJbZ4mpXI/UhYBq0JxRBfRji6');
+INSERT INTO usuariosofthouse (softhouse_id,usuario_nome , senha)
+VALUES (1,  'central', '$2b$10$rM2Q1NIXqwTlfJVq7rcYwOClpNuXkJbZ4mpXI/UhYBq0JxRBfRji6');
 
-INSERT INTO usuariosofthouse (softhouse_id, usuario_id, senha)
-VALUES (1, 2, '$2b$10$rM2Q1NIXqwTlfJVq7rcYwOClpNuXkJbZ4mpXI/UhYBq0JxRBfRji6');
+INSERT INTO usuariosofthouse (softhouse_id, usuario_nome, senha)
+VALUES (1, 'white', '$2b$10$rM2Q1NIXqwTlfJVq7rcYwOClpNuXkJbZ4mpXI/UhYBq0JxRBfRji6');
 
 -- Inserir produto para a empresa
 INSERT INTO produtos (empresa_id, nome_produto, valor, cod_ba, grupo_id)
 VALUES (1, 'Produto Teste', 100.00, 'BA123', 'GT001');
 
 -- Inserir venda
-INSERT INTO venda (empresa_id, valor, status)
-VALUES (1, 150.00, 'Pendente');
+INSERT INTO venda (empresa_id, valor)
+VALUES (1, 150.00);
 
 -- Inserir item da venda
-INSERT INTO venda_item (venda_id, produto_id, valor, desconto, quantidade, status)
-VALUES (1, 1, 100.00, 10.00, 1, 'Pendente');
+INSERT INTO venda_item (venda_id, produto_id, valor, desconto, quantidade)
+VALUES (1, 1, 100.00, 10.00, 1 );
 
 -- Inserir grupo de produtos
 INSERT INTO grupo_prod (grupo_id, nome_grupo, empresa_id)
