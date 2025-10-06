@@ -1,41 +1,14 @@
 import * as jose from 'jose';
-import { TokenPayload, LoginBody } from '../types';
-import { Env } from '../utils';
+import { TokenPayload, LoginBody, Env } from '../../shared/types/types';
+import { gerarHash, validarSenha } from '../../shared/utils/crypto.utils'
+import { respostaCors } from '../../shared/utils/response.handler';
+import { gerarToken, } from '../../shared/middlewares/ensureAuthenticated'
 
-const SECRET = new TextEncoder().encode("sua-chave-secreta-super-segura");
 
-// Gera token apenas com uuid e tipo
-export async function gerarToken(payload: TokenPayload): Promise<string> {
-  return new jose.SignJWT(payload as unknown as jose.JWTPayload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('2h')
-    .sign(SECRET);
-}
 
-export async function validarToken(token: string): Promise<TokenPayload | null> {
+export async function authenticateEmpresaService(body: LoginBody, env: Env): Promise<Response> {
   try {
-    const { payload } = await jose.jwtVerify(token, SECRET);
 
-    if (
-      typeof payload.usuario === 'string' &&
-      typeof payload.empresa === 'string' &&
-      typeof payload.tipo === 'string'
-    ) {
-      return {
-        usuario: payload.usuario,
-        empresa: payload.empresa,
-        tipo: payload.tipo as TokenPayload['tipo']
-      };
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-export async function loginEmpresa(request: Request, env: Env, validarSenha: (senha: string, hash: string) => Promise<boolean>, respostaCors: (data: any, status?: number) => Response): Promise<Response> {
-  try {
-    const body: LoginBody = await request.json();
 
     // 1. Busca o usuário no banco
     const res = await env.D1_BANCO
@@ -72,9 +45,9 @@ export async function loginEmpresa(request: Request, env: Env, validarSenha: (se
 }
 
 
-export async function loginSoftHouse(request: Request, env: Env, validarSenha: (senha: string, hash: string) => Promise<boolean>, respostaCors: (data: any, status?: number) => Response): Promise<Response> {
+export async function authenticateSoftHouseService(body: LoginBody, env: Env): Promise<Response> {
   try {
-    const body: LoginBody = await request.json();
+
     const res = await env.D1_BANCO
       .prepare("SELECT softhouse_id, usuario_nome, senha FROM usuariosofthouse WHERE usuario_nome = ?")
       .bind(body.usuario)
