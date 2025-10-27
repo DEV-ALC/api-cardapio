@@ -23,8 +23,6 @@ export async function loginSoftHouseController(request: IRequest, env: Env): Pro
         const body: LoginBody = await request.json();
         return await authenticateSoftHouseService(body, env);
 
-
-
     } catch (error: any) {
         if (error.message === 'Credenciais inválidas') {
             return respostaCors({ error: 'Usuário ou senha incorretos' }, 401);

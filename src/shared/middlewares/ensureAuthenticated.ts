@@ -4,6 +4,26 @@ import { TokenPayload, LoginBody, Env } from '../../shared/types/types';
 
 const SECRET = new TextEncoder().encode("sua-chave-secreta-super-segura");
 
+export async function requireAuth(request: Request) {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: 'Token faltando' }), { status: 401 });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const payload = await validarToken(token);
+
+    if (!payload) {
+        return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401 });
+    }
+
+    // Se quiser, dá pra anexar o payload ao request
+    // (simulando um "middleware" de auth)
+    // @ts-ignore
+    request.user = payload;
+    return null;
+}
+
 export async function validarToken(token: string): Promise<TokenPayload | null> {
     try {
         const { payload } = await jose.jwtVerify(token, SECRET);

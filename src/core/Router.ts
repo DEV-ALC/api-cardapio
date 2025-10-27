@@ -1,6 +1,8 @@
 import { AutoRouter } from 'itty-router';
-import { loginController } from '../modules/auth/auth.controller';
-import { Env } from '../shared/types/types';
+import { loginController, loginSoftHouseController } from '../modules/auth/auth.controller';
+import { Env, CadastroEmpresaBody } from '../shared/types/types';
+import { validarToken } from '../shared/middlewares/ensureAuthenticated';
+import { CreateEmpresaController } from '../modules/softhouse/softhouse.controller'
 
 // Recebe env e retorna o router configurado
 export function createRouter(env: Env) {
@@ -11,10 +13,16 @@ export function createRouter(env: Env) {
     router.post('/login', async (request) => {
         return await loginController(request, env);
     });
+    router.post('/softhouse', async (request) => {
+        return await loginSoftHouseController(request, env);
+    });
 
-    router.all('*', () =>
-        new Response(JSON.stringify({ error: 'Rota não encontrada' }), { status: 404 })
-    );
+    router.post('/cliente', async (request) => {
+        const body: CadastroEmpresaBody = await request.json();
+        return await CreateEmpresaController(body, env);
+    });
+
+
 
     return { ...router };
 }

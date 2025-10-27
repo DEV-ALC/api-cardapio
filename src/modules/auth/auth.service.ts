@@ -9,7 +9,6 @@ import { gerarToken, } from '../../shared/middlewares/ensureAuthenticated'
 export async function authenticateEmpresaService(body: LoginBody, env: Env): Promise<Response> {
   try {
 
-
     // 1. Busca o usuário no banco
     const res = await env.D1_BANCO
       .prepare("SELECT empresa_id, usuario_nome, senha FROM usuario WHERE usuario_nome = ?")

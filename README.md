@@ -37,4 +37,8 @@ Clone o repositório:
 ```bash
 git clone https://github.com/seu-usuario/api-cardapio.git
 cd api-cardapio
+
+//comando para inciar a banco 
+wrangler d1 migrations apply D1_BANCO  --local
+
 ```
