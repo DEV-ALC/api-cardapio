@@ -1,9 +1,7 @@
-
-
 export function respostaCors(body: any, status = 200): Response {
     const headers = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*', // Em produção, considere restringir para seu domínio web
+        'Access-Control-Allow-Origin': '*',
     };
 
     const responseBody = typeof body === 'string' ? body : JSON.stringify(body);

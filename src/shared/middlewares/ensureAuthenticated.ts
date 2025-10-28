@@ -17,8 +17,6 @@ export async function requireAuth(request: Request) {
         return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401 });
     }
 
-    // Se quiser, dá pra anexar o payload ao request
-    // (simulando um "middleware" de auth)
     // @ts-ignore
     request.user = payload;
     return null;

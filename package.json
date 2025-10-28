@@ -3,6 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
+		"generate:docs": "tsx scripts/generate-docs.ts",
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
@@ -12,6 +13,9 @@
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"@cloudflare/workers-types": "^4.20250911.0",
+		"@types/node": "^24.9.2",
+		"@types/swagger-jsdoc": "^6.0.4",
+		"tsx": "^4.20.6",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
 		"wrangler": "^4.35.0"
@@ -19,6 +23,7 @@
 	"dependencies": {
 		"bcryptjs": "^3.0.2",
 		"itty-router": "^5.0.22",
-		"jose": "^6.1.0"
+		"jose": "^6.1.0",
+		"swagger-jsdoc": "^6.2.8"
 	}
 }
