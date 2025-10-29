@@ -1,6 +1,6 @@
 
 import * as jose from 'jose';
-import { TokenPayload, LoginBody, Env } from '../../shared/types/types';
+import { TokenPayload } from '../types/auth';
 
 const SECRET = new TextEncoder().encode("sua-chave-secreta-super-segura");
 

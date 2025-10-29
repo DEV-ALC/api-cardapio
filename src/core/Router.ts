@@ -1,33 +1,37 @@
 import { AutoRouter } from 'itty-router';
-import { loginController, loginSoftHouseController } from '../modules/auth/auth.controller';
-import { Env, CadastroEmpresaBody } from '../shared/types/types';
+import { Env } from './database/database';
 import { requireAuth } from '../shared/middlewares/ensureAuthenticated';
-import { SofthouseController } from '../modules/softhouse/softhouse.controller'
+import { EmpresaController } from '../modules/empresa/empresa.controller'
+import { SofthouseController } from '../modules/softhouse/softhouse.controller';
 
-// Recebe env e retorna o router configurado
 export function createRouter(env: Env) {
+    const empresaController = new EmpresaController(env)
     const softhouseController = new SofthouseController(env)
     const router = AutoRouter();
 
     router.get('/', () => new Response("✅ Worker rodando!", { status: 200 }));
 
-
-    router.post('/login', async (request) => {
-        return await loginController(request, env);
+    router.post('/login-empresa', async (request) => {
+        return await empresaController.loginEmpresaController(request);
     });
-    router.post('/softhouse', async (request) => {
-        return await loginSoftHouseController(request, env);
+    router.post('/login-softhouse', async (request) => {
+        return await softhouseController.loginSoftHouseController(request);
+    });
+
+    router.get('/empresa', async (request) => {
+        return await empresaController.listEmpresaController();
     });
 
     router.post('/empresa', async (request) => {
         const authError = await requireAuth(request);
         if (authError) return authError;
-        const body: CadastroEmpresaBody = await request.json();
-        return await softhouseController.CreateEmpresaController(body);
+        return await empresaController.CreateEmpresaController(request);
     });
 
-    router.get('/empresa', async (request) => {
-        return await softhouseController.listEmpresaController();
+    router.put('/empresa', async (request) => {
+        const authError = await requireAuth(request);
+        if (authError) return authError;
+        return await empresaController.updateEmpresaController(request);
     });
 
     return { ...router };

@@ -1,5 +1,5 @@
 import { createRouter } from './core/Router';
-import { Env } from './shared/types/types';
+import { Env } from './core/database/database';
 
 export default {
     async fetch(request: Request, env: Env, ctx: ExecutionContext) {
