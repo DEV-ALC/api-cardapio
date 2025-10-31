@@ -1,11 +1,12 @@
-import { ICadastroEmpresaBody } from '../empresa/empresa.model';
+import { ICadastroEmpresaBody, AuthEmpresaResponse } from '../empresa/empresa.model';
 import { Env } from '../../core/database/database';
-import { respostaCors } from '../../shared/utils/response.handler';
 import { empresaRepository } from '../empresa/empresa.repository';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '../../shared/utils/error.handler';
 import { LoginBody } from '../../shared/types/auth';
 import { validarSenha } from '../../shared/utils/crypto.utils';
 import { gerarToken } from '../../shared/middlewares/ensureAuthenticated';
 import { TokenPayload } from '../../shared/types/auth';
+
 
 export class EmpresaService {
     private empresaRepository: empresaRepository;
@@ -14,24 +15,25 @@ export class EmpresaService {
         this.empresaRepository = new empresaRepository(env);
     }
 
-    public async createEmpresa(body: ICadastroEmpresaBody): Promise<Response> {
+    public async createEmpresa(body: ICadastroEmpresaBody): Promise<ICadastroEmpresaBody> {
         const tokenGerado = body.token;
         const expira = new Date();
         expira.setFullYear(expira.getFullYear() + 1);
-
-        await this.empresaRepository.createEmpresa(body);
-
-        return respostaCors({ empresa: body.empresa, token: tokenGerado });
+        const res = await this.empresaRepository.createEmpresa(body);
+        return res;
     }
 
     // ====================== ATUALIZAR EMPRESA ======================
-    public async updateEmpresa(body: ICadastroEmpresaBody): Promise<Response> {
+    public async updateEmpresa(body: ICadastroEmpresaBody): Promise<void> {
         const empresaId = body.empresa;
-        if (!empresaId) return respostaCors("Parâmetro 'empresa' é obrigatório", 400);
+        if (!empresaId) {
+            throw new BadRequestError("Parâmetro 'empresa' é obrigatório");
+        }
 
-        const existe = await this.empresaRepository.listarEmpresaBindId(empresaId,);
-
-        if (!existe) return respostaCors("Empresa não encontrada", 404);
+        const existe = await this.empresaRepository.listarEmpresaById(empresaId,);
+        if (!existe) {
+            throw new NotFoundError("Empresa não encontrada");
+        };
 
         // Atualiza apenas os campos permitidos
         const updates: string[] = [];
@@ -54,34 +56,60 @@ export class EmpresaService {
             valores.push(body.imagemId);
         }
 
-        if (updates.length === 0) return respostaCors("Nenhum campo para atualizar", 400);
+        if (updates.length === 0) {
+            throw new BadRequestError("Nenhum campo para atualizar");
+
+        };
 
         valores.push(empresaId);
 
         await this.empresaRepository.updateEmpresa(updates, valores,)
 
-        return respostaCors({ message: "Empresa atualizada com sucesso!" });
+        return;
     }
 
     // ====================== LISTAR EMPRESAS ======================
-    public async listarEmpresa(): Promise<Response> {
+    public async listarEmpresas(): Promise<ICadastroEmpresaBody[]> {
 
         const res = await this.empresaRepository.listarEmpresa()
 
-        return respostaCors(res.results);
+        return res ?? [];
+    }
+
+    public async listarEmpresaById(id: string): Promise<ICadastroEmpresaBody> {
+
+        const res = await this.empresaRepository.listarEmpresaById(id)
+
+        if (!res) {
+            throw new NotFoundError("Empresa não encontrada");
+        }
+
+        return res;
+    }
+
+    public async listarEmpresaBySlug(slug: string): Promise<string> {
+        const res = await this.empresaRepository.listarEmpresaBySlug(slug)
+
+        if (!res || !res.empresa_id) {
+            throw new NotFoundError("Empresa não encontrada");
+        }
+
+        return res.empresa_id;
     }
 
 
-    public async authenticateEmpresaService(body: LoginBody): Promise<Response> {
+    public async authenticateEmpresaService(body: LoginBody): Promise<AuthEmpresaResponse> {
 
         const res = await this.empresaRepository.authenticateEmpresaRepository(body.usuario);
         if (!res) {
-            return respostaCors("Usuário ou senha incorretos", 401);
+            throw new UnauthorizedError("Usuário ou senha incorretos");
+
         }
 
         const senhaValida = await validarSenha(body.senha, res.senha);
         if (!senhaValida) {
-            return respostaCors("Usuário ou senha incorretos", 401);
+            throw new UnauthorizedError("Usuário ou senha incorretos");
+
         }
 
         const token = await gerarToken({
@@ -90,7 +118,6 @@ export class EmpresaService {
             tipo: 'admin' as TokenPayload['tipo'],
         });
 
-        return respostaCors({ token, usuario: res.usuario_nome, empresa: res.empresa_id });
-
+        return { token, usuario: res.usuario_nome, empresa: res.empresa_id };
     }
 }

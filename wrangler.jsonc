@@ -7,7 +7,6 @@
 		"enabled": true
 	},
 
-	// Adicionando binding do D1
 	"d1_databases": [
 		{
 			"binding": "D1_BANCO",

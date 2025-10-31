@@ -1,12 +1,12 @@
 import { respostaCors } from '../../shared/utils/response.handler';
 import { Env } from '../../core/database/database';
-import { ICadastroEmpresaBody, AuthEmpresaResponse } from './empresa.model';
+import { ICadastroEmpresaBody, AuthEmpresaRepository } from './empresa.model';
 
 
 export class empresaRepository {
     constructor(private env: Env) { }
 
-    public async createEmpresa(body: ICadastroEmpresaBody): Promise<Response> {
+    public async createEmpresa(body: ICadastroEmpresaBody): Promise<ICadastroEmpresaBody> {
         const expira = new Date();
         expira.setFullYear(expira.getFullYear() + 1);
 
@@ -26,7 +26,7 @@ export class empresaRepository {
             )
             .run();
 
-        return respostaCors({ empresa: body.empresa });
+        return body;
 
     }
 
@@ -39,27 +39,37 @@ export class empresaRepository {
     }
 
 
-    public async listarEmpresaBindId(idempresa: string): Promise<Record<string, unknown> | null> {
+    public async listarEmpresaById(idempresa: string): Promise<ICadastroEmpresaBody | null> {
         const res = await this.env.D1_BANCO
-            .prepare("SELECT empresa FROM empresa WHERE empresa = ?")
+            .prepare("SELECT * FROM empresa WHERE empresa = ?")
             .bind(idempresa)
-            .first();
+            .first<ICadastroEmpresaBody>();
+        return res;
+    }
+
+
+    public async listarEmpresaBySlug(slug: string): Promise<{ empresa_id: string } | null> {
+        const res = await this.env.D1_BANCO
+            .prepare("SELECT empresa_id FROM empresa WHERE slug = ?")
+            .bind(slug)
+            .first<{ empresa_id: string }>();
         return res;
     }
 
     // ====================== LISTAR EMPRESAS ======================
-    public async listarEmpresa(): Promise<D1Result> {
+    public async listarEmpresa(): Promise<ICadastroEmpresaBody[] | null> {
         const res = await this.env.D1_BANCO
             .prepare("SELECT empresa_id, nome_empresa, slug, imagem_id FROM empresa")
-            .all<{ empresa: string; nomeEmpresa: string; slug: string; imagemId: string }>();
-        return res
+            .all<ICadastroEmpresaBody>();
+
+        return res.results
     }
 
-    public async authenticateEmpresaRepository(usarioName: string): Promise<AuthEmpresaResponse | null> {
+    public async authenticateEmpresaRepository(usarioName: string): Promise<AuthEmpresaRepository | null> {
         const res = await this.env.D1_BANCO
             .prepare("SELECT empresa_id, usuario_nome, senha FROM usuario WHERE usuario_nome = ?")
             .bind(usarioName)
-            .first<AuthEmpresaResponse>();
+            .first<AuthEmpresaRepository>();
         return res;
     }
 }

@@ -14,6 +14,12 @@ export interface CadastroUsuarioBody {
     senha: string;
 };
 
-export interface AuthEmpresaResponse {
+export interface AuthEmpresaRepository {
     empresa_id: string; usuario_nome: string; senha: string
+}
+
+export interface AuthEmpresaResponse {
+    token: string;
+    usuario: string;
+    empresa: string;
 }

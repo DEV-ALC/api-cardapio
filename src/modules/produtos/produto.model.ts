@@ -6,3 +6,4 @@ export interface CadastroProdutoBody {
     grupoID: string;
     imagemId?: string | null;
 };
+
