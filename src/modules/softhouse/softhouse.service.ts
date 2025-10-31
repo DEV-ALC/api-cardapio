@@ -13,24 +13,5 @@ export class SoftHouseService {
         this.softHouseRepository = new softHouseRepository(env);
     }
 
-    public async authenticateSoftHouseService(body: LoginBody): Promise<AuthSoftHouseResponse> {
 
-        const res = await this.softHouseRepository.authenticateSoftHouseRepository(body.usuario);
-        if (!res) {
-            throw new UnauthorizedError("Usuário ou senha incorretos");
-        }
-
-        const senhaValida = await validarSenha(body.senha, res.senha);
-        if (!senhaValida) {
-            throw new UnauthorizedError("Usuário ou senha incorretos");
-        }
-
-        const token = await gerarToken({
-            usuario: res.usuario_nome,
-            empresa: res.softhouse_id,
-            tipo: 'softhouse' as TokenPayload['tipo'],
-        });
-
-        return { token, usuario: res.usuario_nome, empresa: res.softhouse_id };
-    }
 }

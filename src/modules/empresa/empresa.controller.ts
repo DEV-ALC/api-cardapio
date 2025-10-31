@@ -31,8 +31,8 @@ export class EmpresaController {
     public async updateEmpresaController(request: IRequest): Promise<Response> {
         try {
             const body: ICadastroEmpresaBody = await request.json();
-            const res = await this.EmpresaService.updateEmpresa(body);
-            return respostaCors(res)
+            await this.EmpresaService.updateEmpresa(body);
+            return respostaCors("Atualizado com sucesso", 201)
         } catch (error) {
             if (error instanceof AppError) {
                 return respostaCors(error.message, error.status);
@@ -53,18 +53,6 @@ export class EmpresaController {
         }
     }
 
-    public async loginEmpresaController(request: IRequest): Promise<Response> {
-        try {
-            const body: LoginBody = await request.json();
-            const res = await this.EmpresaService.authenticateEmpresaService(body);
-            return respostaCors(res)
-        } catch (error) {
-            if (error instanceof AppError) {
-                return respostaCors(error.message, error.status);
-            }
-            return respostaCors('Erro interno do servidor', 500);
-        }
-    }
 }
 
 

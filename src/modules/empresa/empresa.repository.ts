@@ -1,6 +1,5 @@
-import { respostaCors } from '../../shared/utils/response.handler';
 import { Env } from '../../core/database/database';
-import { ICadastroEmpresaBody, AuthEmpresaRepository } from './empresa.model';
+import { ICadastroEmpresaBody } from './empresa.model';
 
 
 export class empresaRepository {
@@ -63,13 +62,5 @@ export class empresaRepository {
             .all<ICadastroEmpresaBody>();
 
         return res.results
-    }
-
-    public async authenticateEmpresaRepository(usarioName: string): Promise<AuthEmpresaRepository | null> {
-        const res = await this.env.D1_BANCO
-            .prepare("SELECT empresa_id, usuario_nome, senha FROM usuario WHERE usuario_nome = ?")
-            .bind(usarioName)
-            .first<AuthEmpresaRepository>();
-        return res;
     }
 }

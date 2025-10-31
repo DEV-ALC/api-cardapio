@@ -1,4 +1,4 @@
-import { ICadastroEmpresaBody, AuthEmpresaResponse } from '../empresa/empresa.model';
+import { ICadastroEmpresaBody } from '../empresa/empresa.model';
 import { Env } from '../../core/database/database';
 import { empresaRepository } from '../empresa/empresa.repository';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../../shared/utils/error.handler';
@@ -15,6 +15,37 @@ export class EmpresaService {
         this.empresaRepository = new empresaRepository(env);
     }
 
+
+    // ====================== LISTAR EMPRESAS ======================
+    public async listarEmpresas(): Promise<ICadastroEmpresaBody[]> {
+
+        const res = await this.empresaRepository.listarEmpresa()
+
+        return res ?? [];
+    }
+
+    public async listarEmpresaById(id: string): Promise<ICadastroEmpresaBody> {
+
+        const res = await this.empresaRepository.listarEmpresaById(id)
+
+        if (!res) {
+            throw new NotFoundError("Empresa não encontrada");
+        }
+
+        return res;
+    }
+
+    public async listarEmpresaBySlug(slug: string): Promise<string> {
+        const res = await this.empresaRepository.listarEmpresaBySlug(slug)
+
+        if (!res || !res.empresa_id) {
+            throw new NotFoundError("Empresa não encontrada");
+        }
+
+        return res.empresa_id;
+    }
+
+    // ====================== CRUD EMPRESA ======================
     public async createEmpresa(body: ICadastroEmpresaBody): Promise<ICadastroEmpresaBody> {
         const tokenGerado = body.token;
         const expira = new Date();
@@ -23,7 +54,6 @@ export class EmpresaService {
         return res;
     }
 
-    // ====================== ATUALIZAR EMPRESA ======================
     public async updateEmpresa(body: ICadastroEmpresaBody): Promise<void> {
         const empresaId = body.empresa;
         if (!empresaId) {
@@ -66,58 +96,5 @@ export class EmpresaService {
         await this.empresaRepository.updateEmpresa(updates, valores,)
 
         return;
-    }
-
-    // ====================== LISTAR EMPRESAS ======================
-    public async listarEmpresas(): Promise<ICadastroEmpresaBody[]> {
-
-        const res = await this.empresaRepository.listarEmpresa()
-
-        return res ?? [];
-    }
-
-    public async listarEmpresaById(id: string): Promise<ICadastroEmpresaBody> {
-
-        const res = await this.empresaRepository.listarEmpresaById(id)
-
-        if (!res) {
-            throw new NotFoundError("Empresa não encontrada");
-        }
-
-        return res;
-    }
-
-    public async listarEmpresaBySlug(slug: string): Promise<string> {
-        const res = await this.empresaRepository.listarEmpresaBySlug(slug)
-
-        if (!res || !res.empresa_id) {
-            throw new NotFoundError("Empresa não encontrada");
-        }
-
-        return res.empresa_id;
-    }
-
-
-    public async authenticateEmpresaService(body: LoginBody): Promise<AuthEmpresaResponse> {
-
-        const res = await this.empresaRepository.authenticateEmpresaRepository(body.usuario);
-        if (!res) {
-            throw new UnauthorizedError("Usuário ou senha incorretos");
-
-        }
-
-        const senhaValida = await validarSenha(body.senha, res.senha);
-        if (!senhaValida) {
-            throw new UnauthorizedError("Usuário ou senha incorretos");
-
-        }
-
-        const token = await gerarToken({
-            usuario: res.usuario_nome,
-            empresa: res.empresa_id,
-            tipo: 'admin' as TokenPayload['tipo'],
-        });
-
-        return { token, usuario: res.usuario_nome, empresa: res.empresa_id };
     }
 }
